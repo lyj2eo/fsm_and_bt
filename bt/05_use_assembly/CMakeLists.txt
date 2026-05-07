@@ -1,0 +1,2 @@
+add_executable(bt_05_use_assembly main.cpp)
+target_link_libraries(bt_05_use_assembly PRIVATE btlib)

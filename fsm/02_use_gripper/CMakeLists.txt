@@ -1,0 +1,2 @@
+add_executable(fsm_02_use_gripper main.cpp)
+target_link_libraries(fsm_02_use_gripper PRIVATE fsmlib)

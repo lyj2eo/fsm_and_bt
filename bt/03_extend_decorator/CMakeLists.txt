@@ -1,0 +1,2 @@
+add_executable(bt_03_extend_decorator main.cpp)
+target_link_libraries(bt_03_extend_decorator PRIVATE btlib)

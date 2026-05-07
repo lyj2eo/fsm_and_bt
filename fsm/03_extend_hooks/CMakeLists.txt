@@ -1,0 +1,2 @@
+add_executable(fsm_03_extend_hooks main.cpp)
+target_link_libraries(fsm_03_extend_hooks PRIVATE fsmlib)

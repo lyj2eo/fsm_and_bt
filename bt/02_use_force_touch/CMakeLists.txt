@@ -1,0 +1,2 @@
+add_executable(bt_02_use_force_touch main.cpp)
+target_link_libraries(bt_02_use_force_touch PRIVATE btlib)

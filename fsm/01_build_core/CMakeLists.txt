@@ -1,0 +1,2 @@
+add_executable(fsm_01_build_core main.cpp)
+target_link_libraries(fsm_01_build_core PRIVATE fsmlib)

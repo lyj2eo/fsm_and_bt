@@ -1,0 +1,2 @@
+add_executable(fsm_04_use_safety main.cpp)
+target_link_libraries(fsm_04_use_safety PRIVATE fsmlib)

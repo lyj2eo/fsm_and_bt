@@ -1,0 +1,72 @@
+// 01_build_core - btlib 의 핵심 노드들이 동작하는지 확인.
+//
+// 수정하지 않는다. btlib/src/*.cpp 를 채우면 아래 시나리오가 의도대로 동작한다.
+
+#include "bt/Sequence.h"
+#include "bt/Selector.h"
+#include "bt/Action.h"
+
+#include <iostream>
+#include <memory>
+
+namespace {
+
+const char* toStr(bt::Status s) {
+    switch (s) {
+        case bt::Status::Success: return "Success";
+        case bt::Status::Failure: return "Failure";
+        case bt::Status::Running: return "Running";
+    }
+    return "?";
+}
+
+std::unique_ptr<bt::Action> ok(const char* tag) {
+    return std::make_unique<bt::Action>(tag, [tag] {
+        std::cout << "[" << tag << "] run\n";
+        return bt::Status::Success;
+    });
+}
+
+std::unique_ptr<bt::Action> fail(const char* tag) {
+    return std::make_unique<bt::Action>(tag, [tag] {
+        std::cout << "[" << tag << "] FAIL\n";
+        return bt::Status::Failure;
+    });
+}
+
+} // namespace
+
+int main() {
+    {
+        std::cout << "== test 1 : sequence all-success ==\n";
+        bt::Sequence seq;
+        seq.addChild(ok("A"));
+        seq.addChild(ok("B"));
+        seq.addChild(ok("C"));
+        std::cout << "result = " << toStr(seq.tick()) << "\n\n";
+    }
+    {
+        std::cout << "== test 2 : sequence with failure ==\n";
+        bt::Sequence seq;
+        seq.addChild(ok("A"));
+        seq.addChild(fail("X"));
+        seq.addChild(ok("C"));         // 실행되면 안 됨
+        std::cout << "result = " << toStr(seq.tick()) << "\n\n";
+    }
+    {
+        std::cout << "== test 3 : selector finds first success ==\n";
+        bt::Selector sel;
+        sel.addChild(fail("X"));
+        sel.addChild(ok("B"));
+        sel.addChild(ok("C"));         // 실행되면 안 됨
+        std::cout << "result = " << toStr(sel.tick()) << "\n\n";
+    }
+    {
+        std::cout << "== test 4 : selector all fail ==\n";
+        bt::Selector sel;
+        sel.addChild(fail("X"));
+        sel.addChild(fail("X"));
+        std::cout << "result = " << toStr(sel.tick()) << "\n";
+    }
+    return 0;
+}

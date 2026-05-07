@@ -1,0 +1,2 @@
+add_executable(bt_04_extend_blackboard main.cpp)
+target_link_libraries(bt_04_extend_blackboard PRIVATE btlib)
