@@ -37,14 +37,80 @@ namespace {
 //       int ticks_ = 0;
 //   };
 // ──────────────────────────────────────────────────────────────────────────
+class GripperOpen : public fsm::State {
+public:
+    void onEnter() override  { }
+    void onUpdate() override { }
+    void onExit() override   { }
+    std::string name() const override { return "Open"; }
+
+};
+
+class GripperClosing : public fsm::State {
+public:
+    explicit GripperClosing(fsm::StateMachine* sm) : sm_(sm) {}
+    void onEnter() override { }
+    void onUpdate() override
+    {
+        ticks_++;
+        std::cout << "[Closing] tick "<<ticks_<<"/"<< closing_ticks_ << std::endl;
+        if (ticks_ == closing_ticks_) {
+            sm_->transitionTo("Closed");
+        }
+    }
+    void onExit() override { }
+    std::string name() const override { return "Closing"; }
+
+private:
+    fsm::StateMachine* sm_ = nullptr;
+    int ticks_ = 0;
+    int closing_ticks_ = 3;
+};
+
+class GripperClosed : public fsm::State {
+    void onEnter() override  { }
+    void onUpdate() override { }
+    void onExit() override   { }
+    std::string name() const override { return "Closed"; }
+public:
+
+};
+
+class GripperOpening : public fsm::State {
+public:
+    explicit GripperOpening(fsm::StateMachine* sm) : sm_(sm) {}
+    void onEnter() override { }
+    void onUpdate() override
+    {
+        ticks_++;
+        std::cout << "[Opening] tick "<<ticks_<<"/"<< opening_ticks_ << std::endl;
+        if (ticks_ == opening_ticks_) {
+            sm_->transitionTo("Open");
+        }
+    }
+    void onExit() override { }
+    std::string name() const override { return "Opening"; }
+
+private:
+    fsm::StateMachine* sm_ = nullptr;
+    int ticks_ = 0;
+    int opening_ticks_ = 3;
+};
+
 
 } // namespace
 
 int main() {
     fsm::StateMachine sm;
-
+    
     // TODO: 4개 상태를 sm 에 등록한다.
+    sm.addState(std::make_unique<GripperOpen>());
+    sm.addState(std::make_unique<GripperClosing>(&sm));
+    sm.addState(std::make_unique<GripperClosed>());
+    sm.addState(std::make_unique<GripperOpening>(&sm));
+
     // TODO: 초기 상태를 "Open" 으로 설정한다.
+    sm.setInitial("Open");
 
     // 시나리오:
     //  1) close 명령 — Open 에서 Closing 으로 전이
