@@ -24,6 +24,52 @@ private:
     std::string name_;
 };
 
+class Idle : public fsm::State {
+public:
+    void onEnter() override  { }
+    void onUpdate() override { }
+    void onExit() override   { }
+    std::string name() const override { return "Idle"; }
+
+private:
+};
+
+class Initializing : public fsm::State {
+public:
+    void onEnter() override  { }
+    void onUpdate() override { }
+    void onExit() override   { }
+    std::string name() const override { return "Initializing"; }
+
+private:
+};
+
+class Ready : public fsm::State {
+public:
+    void onEnter() override  { }
+    void onUpdate() override {
+        // E-Stop 모니터링
+     }
+    void onExit() override   { }
+    std::string name() const override { return "Ready"; }
+
+private:
+};
+
+class Executing : public fsm::State {
+public:
+    void onEnter() override  { }
+    void onUpdate() override { 
+        // 작업 완료 여부 확인
+        // E-Stop 모니터링
+        // 외력감지 ...
+    }
+    void onExit() override   { }
+    std::string name() const override { return "Executing"; }
+
+private:
+};
+
 } // namespace fsm
 
 int main() {
@@ -51,12 +97,12 @@ int main() {
 
     sm.handleEvent("start");
 
-    // 캘리브레이션 전 — 가드에 막혀 발화 안 됨.
+    // before calibration
     if (!sm.handleEvent("tick")) {
         std::cout << "event 'tick' rejected: not calibrated yet\n";
     }
 
-    // 캘리브레이션 완료 후 다시 시도.
+    // after calibration
     calibrated = true;
     sm.handleEvent("tick");
 
