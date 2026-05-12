@@ -34,7 +34,7 @@ void StateMachine::transitionTo(const std::string& name) {
             std::cout << "[State transition failure] state '" << name << "' is already the current state.\n";
             return;
         } else{
-            std::cout<<"["<<current_->name()<<"]"<<" -> ["<<name<<"]"<<std::endl;
+            std::cout<<"[Transition] '"<<current_->name()<<"'"<<" -> '"<<name<<"'"<<std::endl;
             current_->onExit(); 
             setInitial(name);
         }
@@ -66,6 +66,7 @@ void StateMachine::addTransition(const std::string& from,
 
     auto key = makeKey(from, event);
     transitions_[key].push_back({ from, to, event, std::move(guard) }); 
+    std::cout << "[add Transition] " << from << " -> " << to << " (" << event << ")\n";
 }
 
 bool StateMachine::handleEvent(const std::string& event) {
@@ -91,11 +92,13 @@ bool StateMachine::handleEvent(const std::string& event) {
         std::string to = tr.to;
         
         transitionTo(to);
+        update();
         if (onTransition_) onTransition_(from, to, event);
 
         return true; // first matching transition
     }
 
+    std::cerr << "[Guard] failed"<< std::endl;
     return false;
 }
 

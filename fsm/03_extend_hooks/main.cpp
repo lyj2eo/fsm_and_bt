@@ -16,9 +16,9 @@ namespace fsm {
 class LoggingState : public fsm::State {
 public:
     explicit LoggingState(std::string n) : name_(std::move(n)) {}
-    void onEnter() override  { }//std::cout << "  enter  " << name_ << "\n"; }
-    void onUpdate() override {}
-    void onExit() override   { }//std::cout << "  exit   " << name_ << "\n"; }
+    void onEnter() override  { std::cout << "  enter  " << name_ << "\n"; }
+    void onUpdate() override { std::cout << "  update " << name_ << "\n"; }
+    void onExit() override   { std::cout << "  exit   " << name_ << "\n"; }
     std::string name() const override { return name_; }
 private:
     std::string name_;
@@ -27,7 +27,7 @@ private:
 class Idle : public fsm::State {
 public:
     void onEnter() override  { }
-    void onUpdate() override { }
+    void onUpdate() override { std::cout << "current state is :" << name() << std::endl; }
     void onExit() override   { }
     std::string name() const override { return "Idle"; }
 
@@ -36,12 +36,34 @@ private:
 
 class Initializing : public fsm::State {
 public:
-    void onEnter() override  { }
-    void onUpdate() override { }
+    explicit Initializing(bool& calibrated) : calibrated_(calibrated) {}
+
+    void onEnter() override  { 
+        tick_ = 0;
+        calibrated_ = false;
+        std::cout << "[Initializing] start calibration\n";
+    }
+    void onUpdate() override {
+        
+        if (tick_ >= calibration_tick) return;
+
+        ++tick_;
+        std::cout << "[Initializing] calibration in progress... "
+                  << tick_ << "/" << calibration_tick
+                  << " (" << tick_ * 100 / calibration_tick << "%)\n";
+ 
+        if (tick_ >= calibration_tick) {
+            calibrated_ = true;
+            std::cout << "[Initializing] calibration complete\n";
+        }
+    }
     void onExit() override   { }
     std::string name() const override { return "Initializing"; }
 
 private:
+    int tick_ = 0;
+    const int calibration_tick = 15;
+    bool& calibrated_;
 };
 
 class Ready : public fsm::State {
@@ -59,7 +81,7 @@ private:
 class Executing : public fsm::State {
 public:
     void onEnter() override  { }
-    void onUpdate() override { 
+    void onUpdate() override {
         // 작업 완료 여부 확인
         // E-Stop 모니터링
         // 외력감지 ...
@@ -74,12 +96,14 @@ private:
 
 int main() {
     fsm::StateMachine sm;
-    sm.addState(std::make_unique<fsm::LoggingState>("Idle"));
-    sm.addState(std::make_unique<fsm::LoggingState>("Initializing"));
-    sm.addState(std::make_unique<fsm::LoggingState>("Ready"));
-    sm.addState(std::make_unique<fsm::LoggingState>("Executing"));
-
+    
     bool calibrated = false;
+
+    sm.addState(std::make_unique<fsm::Idle>());
+    sm.addState(std::make_unique<fsm::Initializing>(calibrated));
+    sm.addState(std::make_unique<fsm::Ready>());
+    sm.addState(std::make_unique<fsm::Executing>());
+
 
     // 전이 맵 등록 (README 의 표 참고).
     sm.addTransition("Idle",         "Initializing", "start");
@@ -90,24 +114,36 @@ int main() {
     sm.setOnTransition([](const std::string& f,
                           const std::string& t,
                           const std::string& e) {
-        std::cout << "[T] " << f << " -> " << t << " (" << e << ")\n";
     });
 
+    /* run scenario */
     sm.setInitial("Idle");
-
+    
+    std::cout << "==== commnand start ====" << std::endl;
     sm.handleEvent("start");
 
     // before calibration
-    if (!sm.handleEvent("tick")) {
-        std::cout << "event 'tick' rejected: not calibrated yet\n";
-    }
-
-    // after calibration
-    calibrated = true;
+    std::cout << "==== commnand tick ====" << std::endl;
     sm.handleEvent("tick");
 
+    // update
+    for (int i = 0; i < 20; ++i){
+        sm.update();
+    }
+    // if (!sm.handleEvent("tick")) {
+    //     std::cout << "event 'tick' rejected: not calibrated yet\n";
+    // }
+
+    // after calibration
+    std::cout << "==== commnand tick ====" << std::endl;
+    sm.handleEvent("tick");
+
+    std::cout << "==== commnand run ====" << std::endl;
     sm.handleEvent("run");
+
+    std::cout << "==== commnand done ====" << std::endl;
     sm.handleEvent("done");
+    
 
     return 0;
 }
