@@ -10,28 +10,28 @@
 #include <iostream>
 #include <memory>
 
-namespace {
+namespace fsm {
 
 // 단순한 로그용 상태. 4종류 모두 비슷하므로 한 클래스로 묶었다.
 class LoggingState : public fsm::State {
 public:
     explicit LoggingState(std::string n) : name_(std::move(n)) {}
-    void onEnter() override  { std::cout << "  enter  " << name_ << "\n"; }
+    void onEnter() override  { }//std::cout << "  enter  " << name_ << "\n"; }
     void onUpdate() override {}
-    void onExit() override   { std::cout << "  exit   " << name_ << "\n"; }
+    void onExit() override   { }//std::cout << "  exit   " << name_ << "\n"; }
     std::string name() const override { return name_; }
 private:
     std::string name_;
 };
 
-} // namespace
+} // namespace fsm
 
 int main() {
     fsm::StateMachine sm;
-    sm.addState(std::make_unique<LoggingState>("Idle"));
-    sm.addState(std::make_unique<LoggingState>("Initializing"));
-    sm.addState(std::make_unique<LoggingState>("Ready"));
-    sm.addState(std::make_unique<LoggingState>("Executing"));
+    sm.addState(std::make_unique<fsm::LoggingState>("Idle"));
+    sm.addState(std::make_unique<fsm::LoggingState>("Initializing"));
+    sm.addState(std::make_unique<fsm::LoggingState>("Ready"));
+    sm.addState(std::make_unique<fsm::LoggingState>("Executing"));
 
     bool calibrated = false;
 

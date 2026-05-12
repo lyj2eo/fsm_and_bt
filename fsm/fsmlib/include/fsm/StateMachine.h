@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <functional>
 
 namespace fsm {
 
@@ -44,11 +45,34 @@ public:
     // 현재 상태의 이름을 돌려준다. 상태가 없으면 빈 문자열.
     std::string currentName() const;
 
+    using Guard = std::function<bool()>;
+    using TransitionCallback = std::function<void(const std::string& from,
+                                                  const std::string& to,
+                                                  const std::string& event)>;
+        
+    struct Transition {
+        std::string from;
+        std::string to;
+        std::string event;
+        Guard guard; 
+    };
+
+    void addTransition(const std::string& from,
+                       const std::string& to,
+                       const std::string& event,
+                       Guard guard = nullptr);
+
+    bool handleEvent(const std::string& event);
+
+    void setOnTransition(TransitionCallback cb);        
+
 private:
-    // 힌트: 상태를 이름으로 빠르게 찾을 수 있어야 하고,
-    //       현재 어떤 상태인지도 기억해야 한다.
     std::unordered_map<std::string, std::unique_ptr<State>> states_;
     State* current_ = nullptr;
+
+    static std::string makeKey(const std::string& from, const std::string& event);
+    std::unordered_map<std::string, std::vector<Transition>> transitions_;
+    TransitionCallback onTransition_;
 };
 
 } // namespace fsm

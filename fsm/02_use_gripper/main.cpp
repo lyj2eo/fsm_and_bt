@@ -10,7 +10,7 @@
 #include <iostream>
 #include <memory>
 
-namespace {
+namespace fsm {
 
 // ──────────────────────────────────────────────────────────────────────────
 // TODO: 4개의 상태 클래스를 정의한다.
@@ -98,16 +98,16 @@ private:
 };
 
 
-} // namespace
+} // namespace fsm
 
 int main() {
     fsm::StateMachine sm;
     
     // TODO: 4개 상태를 sm 에 등록한다.
-    sm.addState(std::make_unique<GripperOpen>());
-    sm.addState(std::make_unique<GripperClosing>(&sm));
-    sm.addState(std::make_unique<GripperClosed>());
-    sm.addState(std::make_unique<GripperOpening>(&sm));
+    sm.addState(std::make_unique<fsm::GripperOpen>());
+    sm.addState(std::make_unique<fsm::GripperClosing>(&sm));
+    sm.addState(std::make_unique<fsm::GripperClosed>());
+    sm.addState(std::make_unique<fsm::GripperOpening>(&sm));
 
     // TODO: 초기 상태를 "Open" 으로 설정한다.
     sm.setInitial("Open");
