@@ -6,11 +6,13 @@ namespace fsm {
 StateMachine::StateMachine() = default;
 StateMachine::~StateMachine() = default;
 
-void StateMachine::addState(std::unique_ptr<State> state) {
+void StateMachine::addState(std::unique_ptr<State> state)
+{
     states_[state->name()] = std::move(state);
 }
 
-void StateMachine::setInitial(const std::string& name) {
+void StateMachine::setInitial(const std::string& name)
+{
     auto it = states_.find(name);
 
     if (it == states_.end()) {
@@ -21,7 +23,8 @@ void StateMachine::setInitial(const std::string& name) {
     current_->onEnter();
 }
 
-void StateMachine::transitionTo(const std::string& name) {
+void StateMachine::transitionTo(const std::string& name)
+{
     auto it = states_.find(name);
     if (it == states_.end()) {
         std::cerr << "[State transition failure] state '"
@@ -43,7 +46,8 @@ void StateMachine::transitionTo(const std::string& name) {
     }
 }
 
-void StateMachine::update() {
+void StateMachine::update() 
+{
     if(!current_) {
         std::cerr << "No current state. update is ignored.\n";
         return;
@@ -51,11 +55,13 @@ void StateMachine::update() {
     current_->onUpdate();
 }
 
-std::string StateMachine::currentName() const {
+std::string StateMachine::currentName() const 
+{
     return {current_ ? current_->name() : ""};
 }
 
-std::string StateMachine::makeKey(const std::string& from, const std::string& event) {
+std::string StateMachine::makeKey(const std::string& from, const std::string& event) 
+{
     return from + "+" + event;
 }
 
@@ -69,7 +75,8 @@ void StateMachine::addTransition(const std::string& from,
     std::cout << "[add Transition] " << from << " -> " << to << " (" << event << ")\n";
 }
 
-bool StateMachine::handleEvent(const std::string& event) {
+bool StateMachine::handleEvent(const std::string& event) 
+{
 
     if (!current_) {
         std::cerr << "No current state.\n";
@@ -89,7 +96,7 @@ bool StateMachine::handleEvent(const std::string& event) {
         continue;
         
         std::string from = current_->name();
-        std::string to = tr.to;
+        const auto& to = tr.to;
         
         transitionTo(to);
         update();

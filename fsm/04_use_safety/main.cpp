@@ -12,14 +12,6 @@
 
 namespace {
 
-// TODO: 4개의 안전 상태 클래스를 정의한다.
-//   - Normal
-//   - ReducedSpeed
-//   - ProtectiveStop
-//   - EmergencyStop
-//
-// 각 상태의 onEnter / onExit 에서 출력할 내용은 자유.
-// 한 클래스로 묶어서 이름만 바꿔주는 LoggingState 패턴을 써도 된다 (03번 참고).
 class Normal : public fsm::State {
 public:
     void onEnter() override  { }
@@ -59,9 +51,7 @@ private:
 class EmergencyStop : public fsm::State {
 public:
     void onEnter() override  { }
-    void onUpdate() override {
-        // estop release -> normal
-     }
+    void onUpdate() override {}
     void onExit() override   { }
     std::string name() const override { return "EmergencyStop"; }
 
@@ -73,27 +63,20 @@ private:
 int main() {
     fsm::StateMachine sm;
 
-    // TODO: 4개 상태를 등록한다.
+    // set states
     sm.addState(std::make_unique<Normal>());
     sm.addState(std::make_unique<ReducedSpeed>());
     sm.addState(std::make_unique<ProtectiveStop>());
     sm.addState(std::make_unique<EmergencyStop>());
 
-    // TODO: setOnTransition 으로 [T] from -> to (event) 로그 콜백을 단다.
     sm.setOnTransition([](const std::string& from,
                           const std::string& to,
                           const std::string& event) {});
 
-    // 입력 시뮬레이션 변수 — 가드에서 캡처해 사용
+    // emergency stop
     bool estop_pressed = false;
-    (void)estop_pressed;
 
-    // TODO: 전이 맵 등록 (README 의 표 참고)
-    //   - Normal <-> ReducedSpeed                     (human_in_zone, zone_clear)
-    //   - {Normal, ReducedSpeed} -> ProtectiveStop    (collision_detected)
-    //   - ProtectiveStop -> Normal                    (reset)
-    //   - {Normal, ReducedSpeed, ProtectiveStop} -> EmergencyStop  (estop_pressed)
-    //   - EmergencyStop -> Normal                     (reset, guard: !estop_pressed)
+    // set transitions
     sm.addTransition("Normal", "ReducedSpeed", "human_in_zone");
     sm.addTransition("ReducedSpeed", "Normal", "zone_clear");
     

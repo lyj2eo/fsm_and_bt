@@ -12,17 +12,16 @@
 
 namespace fsm {
 
-// 단순한 로그용 상태. 4종류 모두 비슷하므로 한 클래스로 묶었다.
-class LoggingState : public fsm::State {
-public:
-    explicit LoggingState(std::string n) : name_(std::move(n)) {}
-    void onEnter() override  { std::cout << "  enter  " << name_ << "\n"; }
-    void onUpdate() override { std::cout << "  update " << name_ << "\n"; }
-    void onExit() override   { std::cout << "  exit   " << name_ << "\n"; }
-    std::string name() const override { return name_; }
-private:
-    std::string name_;
-};
+// class LoggingState : public fsm::State {
+// public:
+//     explicit LoggingState(std::string n) : name_(std::move(n)) {}
+//     void onEnter() override  { std::cout << "  enter  " << name_ << "\n"; }
+//     void onUpdate() override { std::cout << "  update " << name_ << "\n"; }
+//     void onExit() override   { std::cout << "  exit   " << name_ << "\n"; }
+//     std::string name() const override { return name_; }
+// private:
+//     std::string name_;
+// };
 
 class Idle : public fsm::State {
 public:
@@ -99,13 +98,13 @@ int main() {
     
     bool calibrated = false;
 
+    // set states
     sm.addState(std::make_unique<fsm::Idle>());
     sm.addState(std::make_unique<fsm::Initializing>(calibrated));
     sm.addState(std::make_unique<fsm::Ready>());
     sm.addState(std::make_unique<fsm::Executing>());
 
-
-    // 전이 맵 등록 (README 의 표 참고).
+    // set transitions
     sm.addTransition("Idle",         "Initializing", "start");
     sm.addTransition("Initializing", "Ready",        "tick", [&]{ return calibrated; });
     sm.addTransition("Ready",        "Executing",    "run");

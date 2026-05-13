@@ -49,7 +49,9 @@ public:
 class GripperClosing : public fsm::State {
 public:
     explicit GripperClosing(fsm::StateMachine* sm) : sm_(sm) {}
-    void onEnter() override { }
+    void onEnter() override { 
+        ticks_ = 0;
+    }
     void onUpdate() override
     {
         ticks_++;
@@ -79,7 +81,9 @@ public:
 class GripperOpening : public fsm::State {
 public:
     explicit GripperOpening(fsm::StateMachine* sm) : sm_(sm) {}
-    void onEnter() override { }
+    void onEnter() override { 
+        ticks_ = 0;
+    }
     void onUpdate() override
     {
         ticks_++;
