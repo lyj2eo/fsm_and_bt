@@ -34,7 +34,7 @@ void StateMachine::transitionTo(const std::string& name) {
             std::cout << "[State transition failure] state '" << name << "' is already the current state.\n";
             return;
         } else{
-            std::cout<<"[Transition] '"<<current_->name()<<"'"<<" -> '"<<name<<"'"<<std::endl;
+            std::cout<<"[Transition] '"<<current_->name()<<"' -> '"<<name<<"'"<<std::endl;
             current_->onExit(); 
             setInitial(name);
         }

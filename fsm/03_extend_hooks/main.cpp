@@ -119,11 +119,11 @@ int main() {
     /* run scenario */
     sm.setInitial("Idle");
     
-    std::cout << "==== commnand start ====" << std::endl;
+    std::cout << ">> commnand start" << std::endl;
     sm.handleEvent("start");
 
     // before calibration
-    std::cout << "==== commnand tick ====" << std::endl;
+    std::cout << ">> commnand tick" << std::endl;
     sm.handleEvent("tick");
 
     // update
@@ -135,13 +135,13 @@ int main() {
     // }
 
     // after calibration
-    std::cout << "==== commnand tick ====" << std::endl;
+    std::cout << ">> commnand tick" << std::endl;
     sm.handleEvent("tick");
 
-    std::cout << "==== commnand run ====" << std::endl;
+    std::cout << ">> commnand run" << std::endl;
     sm.handleEvent("run");
 
-    std::cout << "==== commnand done ====" << std::endl;
+    std::cout << ">> commnand done" << std::endl;
     sm.handleEvent("done");
     
 
