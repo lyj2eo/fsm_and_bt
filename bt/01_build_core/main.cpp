@@ -17,7 +17,7 @@ const char* toStr(bt::Status s) {
         case bt::Status::Failure: return "Failure";
         case bt::Status::Running: return "Running";
     }
-    return "?";
+    return "Unknown";
 }
 
 std::unique_ptr<bt::Action> ok(const char* tag) {
@@ -37,36 +37,43 @@ std::unique_ptr<bt::Action> fail(const char* tag) {
 } // namespace
 
 int main() {
-    {
-        std::cout << "== test 1 : sequence all-success ==\n";
-        bt::Sequence seq;
-        seq.addChild(ok("A"));
-        seq.addChild(ok("B"));
-        seq.addChild(ok("C"));
-        std::cout << "result = " << toStr(seq.tick()) << "\n\n";
-    }
-    {
-        std::cout << "== test 2 : sequence with failure ==\n";
-        bt::Sequence seq;
-        seq.addChild(ok("A"));
-        seq.addChild(fail("X"));
-        seq.addChild(ok("C"));         // 실행되면 안 됨
-        std::cout << "result = " << toStr(seq.tick()) << "\n\n";
-    }
-    {
-        std::cout << "== test 3 : selector finds first success ==\n";
-        bt::Selector sel;
-        sel.addChild(fail("X"));
-        sel.addChild(ok("B"));
-        sel.addChild(ok("C"));         // 실행되면 안 됨
-        std::cout << "result = " << toStr(sel.tick()) << "\n\n";
-    }
-    {
-        std::cout << "== test 4 : selector all fail ==\n";
-        bt::Selector sel;
-        sel.addChild(fail("X"));
-        sel.addChild(fail("X"));
-        std::cout << "result = " << toStr(sel.tick()) << "\n";
-    }
+    
+    std::cout << "== test 1 : sequence all-success ==\n";
+    bt::Sequence seq1;
+    seq1.addChild(ok("A"));
+    seq1.addChild(ok("B"));
+    seq1.addChild(ok("C"));
+    bt::Status result = seq1.tick();
+    std::cout << "result = " << toStr(result) << "\n\n";
+
+
+
+    std::cout << "== test 2 : sequence with failure ==\n";
+    bt::Sequence seq2;
+    seq2.addChild(ok("A"));
+    seq2.addChild(fail("X"));
+    seq2.addChild(ok("C"));
+    bt::Status result2 = seq2.tick();
+    std::cout << "result = " << toStr(result2) << "\n\n";
+
+
+
+    std::cout << "== test 3 : selector finds first success ==\n";
+    bt::Selector sel1;
+    sel1.addChild(fail("X"));
+    sel1.addChild(ok("B"));
+    sel1.addChild(ok("C"));
+    bt::Status result3 = sel1.tick();
+    std::cout << "result = " << toStr(result3) << "\n\n";
+
+
+
+    std::cout << "== test 4 : selector all fail ==\n";
+    bt::Selector sel2;
+    sel2.addChild(fail("X"));
+    sel2.addChild(fail("X"));
+    bt::Status result4 = sel2.tick();
+    std::cout << "result = " << toStr(result4) << "\n\n";
+    
     return 0;
 }
