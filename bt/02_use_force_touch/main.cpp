@@ -20,33 +20,99 @@ const char* toStr(bt::Status s) {
     return "?";
 }
 
+std::unique_ptr<bt::Action> moveTo(const std::string& name,
+                                    double& pose_z,
+                                    double target_z){
+    return std::make_unique<bt::Action>( name, [&pose_z, target_z]() {
+        std::cout << ">> move to pose : " << pose_z << " -> " << target_z << std::endl;
+        pose_z = target_z;
+        return bt::Status::Success;
+    }
+    );
+}
+
 } // namespace
 
 int main() {
-    // 시뮬레이션 상태 — 람다에서 캡처해서 사용한다.
-    double force_z = 0.0;     // 측정 힘 [N]
-    double pose_z  = 0.10;    // 현재 TCP 높이 [m]
-    bool   gripper_closed = false;
-    const double contact_threshold = 5.0;  // [N]
+    double force_z = 0.0;
+    double pose_z  = 0.0;
+    double safety_height = 0.10;
 
-    (void)force_z; (void)pose_z; (void)gripper_closed; // TODO 채우기 전 경고 방지용
+    bool is_contact = false;
+    bool gripper_closed = false;
+    const double contact_threshold = 5.0;
 
-    bt::Sequence root;
+    bt::Sequence root(bt::Sequence::SequenceType::Resume);
 
-    // TODO: 아래 액션들을 차례로 root 에 add 한다.
-    //
     //   1) EnableForceMode
-    //   2) MoveAbovePart           (pose_z 를 안전 높이로 설정)
-    //   3) DescendUntilContact     (천천히 pose_z 를 낮추며 force_z 가 contact_threshold 이상이 되면 Success)
-    //   4) CheckContact            (force_z >= contact_threshold 면 Success, 아니면 Failure)
-    //   5) CloseGripper
-    //   6) Lift                    (다시 안전 높이로)
-    //   7) DisableForceMode
-    //
-    // 각 액션은 std::make_unique<bt::Action>("Name", []{ ... return bt::Status::Success; })
-    // 형태로 만들고, root.addChild(std::move(act)) 로 등록한다.
+    auto enableForceMode = std::make_unique<bt::Action>("EnableForceMode", [] {
+        std::cout << ">> force control on!"<< std::endl;
+        return bt::Status::Success;
+    });
 
-    auto status = root.tick();
+    //   2) MoveWaypoint
+    auto moveWaypoint = std::make_unique<bt::Action>("MoveWaypoint", [&pose_z, safety_height] {
+        pose_z = safety_height;
+        std::cout << ">> safety height settings, h = " << pose_z << std::endl;
+        return bt::Status::Success;
+    });
+
+    //   3) MoveUntilContact
+    auto moveUntilContact = std::make_unique<bt::Action>("MoveUntilContact", [&] {
+        pose_z -= 0.02;
+        force_z = (pose_z <= 0.05) ? 6.0 : 0.0; 
+        std::cout << ">> current pose_z = " << pose_z << std::endl;
+
+        if (force_z >= contact_threshold){
+            is_contact = true;
+            std::cout << ">> contact detected!" << std::endl;
+            return bt::Status::Success;
+        }
+        return bt::Status::Running;
+    });   
+    
+    //   4) CheckContact
+    auto checkContact = std::make_unique<bt::Action>("CheckContact", [&is_contact, &force_z, contact_threshold] {
+        if (is_contact && force_z >= contact_threshold)
+            return bt::Status::Success;
+
+        std::cout << ">> contact is not detected!" << std::endl;
+        return bt::Status::Failure;
+    });
+
+    //   5) Backward
+    auto backward = std::make_unique<bt::Action>("Backward", [&pose_z] {
+        pose_z += 0.01;
+        std::cout << ">> move backward slightly" << std::endl;
+        return bt::Status::Success;
+    });
+
+    //   6) DisableForceMode
+    auto disableForceMode = std::make_unique<bt::Action>("DisableForceMode", [] {
+        std::cout << ">> force control off!"<< std::endl;
+        return bt::Status::Success;
+    });
+
+    //   7) Move
+    auto move = std::make_unique<bt::Action>("Move", [&pose_z, safety_height] {
+        pose_z = safety_height;
+        std::cout << ">> move to safety height" << std::endl;
+        return bt::Status::Success;
+    });
+
+    root.addChild(std::move(enableForceMode));
+    root.addChild(moveTo("MoveWaypoint", pose_z, safety_height));
+    root.addChild(std::move(moveUntilContact));
+    root.addChild(std::move(checkContact));
+    root.addChild(std::move(backward));
+    root.addChild(std::move(disableForceMode));
+    root.addChild(moveTo("Move", pose_z, safety_height));
+
+    bt::Status status;
+    do {
+        status = root.tick();
+    } while (status == bt::Status::Running);
+
     std::cout << "result = " << toStr(status) << "\n";
     return 0;
 }
