@@ -44,6 +44,7 @@ int main() {
 
     bt::Sequence root(bt::Sequence::SequenceType::Resume);
 
+    /* * * * add actions for sequence * * * */
     //   1) EnableForceMode
     auto enableForceMode = std::make_unique<bt::Action>("EnableForceMode", [] {
         std::cout << ">> force control on!"<< std::endl;
@@ -100,6 +101,9 @@ int main() {
         return bt::Status::Success;
     });
 
+
+
+    /* * * * add children to sequence * * * */
     root.addChild(std::move(enableForceMode));
     root.addChild(moveTo("MoveWaypoint", pose_z, safety_height));
     root.addChild(std::move(moveUntilContact));
@@ -108,6 +112,9 @@ int main() {
     root.addChild(std::move(disableForceMode));
     root.addChild(moveTo("Move", pose_z, safety_height));
 
+    
+
+    /* * * * run scenario * * * */
     bt::Status status;
     do {
         status = root.tick();
