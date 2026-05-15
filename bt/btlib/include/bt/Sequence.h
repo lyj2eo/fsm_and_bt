@@ -6,8 +6,17 @@ namespace bt {
 
 class Sequence : public Composite {
 public:
+    enum class SequenceType{ Restart, Resume };
+
+    Sequence(SequenceType st = SequenceType::Restart)
+        : st_(st){}
+
     Status tick() override;
     std::string name() const override { return "Sequence"; }
+
+private:
+    SequenceType st_;
+    size_t current_child_idx_ = 0;
 };
 
 } // namespace bt
