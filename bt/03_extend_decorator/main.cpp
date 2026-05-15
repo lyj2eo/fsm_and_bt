@@ -1,11 +1,7 @@
-// 03_extend_decorator - Retry 데코레이터로 peg-in-hole 삽입 재시도.
-//
-// 학습자가 라이브러리에 Decorator / Retry / Inverter 를 추가했다는 전제.
-// 라이브러리 확장 전에는 Retry.h 를 찾을 수 없으므로 빌드 실패한다 — 정상이다.
-
 #include "bt/Sequence.h"
 #include "bt/Action.h"
-#include "bt/Retry.h"      // <-- 학습자가 만들 헤더
+#include "bt/Inverter.h"
+#include "bt/Retry.h"
 
 #include <iostream>
 #include <memory>
@@ -21,53 +17,103 @@ const char* toStr(bt::Status s) {
     return "?";
 }
 
+std::unique_ptr<bt::Action> checkContact(bool is_contact) {
+    return std::make_unique<bt::Action>("CheckNoContact", [is_contact] {
+        if (is_contact) {
+            std::cout << ">> contact is detected!\n";
+            return bt::Status::Failure;
+        }
+
+        std::cout << ">> contact is not detected!\n";
+        return bt::Status::Success;
+    });
+}
+
 } // namespace
 
 int main() {
-    // 시뮬레이션 상태
-    int    attempt   = 0;       // 현재 시도 회차
-    double force_xy  = 0.0;     // 측면 힘
-    const double align_thresh = 2.0;
+    bool is_contact = false;
+    int attempt_cnt = 0;       // current attempt count
+    int max_attempt_cnt = 5;   // maximum attempt count
+    double force_xy = 0.0;
+    const double align_force_thresh = 2.0;
 
-    bt::Sequence root;
+    bt::Sequence root(bt::Sequence::SequenceType::Resume);
 
-    root.addChild(std::make_unique<bt::Action>("EnableForceMode", []{
-        std::cout << "[EnableForceMode] on\n";
+    /* * * * add actions for sequence * * * */
+    // 1. 접촉 확인 (접촉이 있을시 실패)
+    
+    // 2. enable force mode
+    auto enableForceMode = std::make_unique<bt::Action>("EnableForceMode", []{
+        std::cout << ">> force control on!\n";
         return bt::Status::Success;
-    }));
+    });
 
-    root.addChild(std::make_unique<bt::Action>("ApproachHole", []{
-        std::cout << "[ApproachHole] over hole\n";
+    // 3. 접촉 확인 (접촉이 없을시 실패)
+
+    // 4. approach hole
+    auto approachHole = std::make_unique<bt::Action>("ApproachHole", []{
+        std::cout << ">> approach the hole\n";
         return bt::Status::Success;
-    }));
+    });
 
-    // Retry(3) 안에 InsertAttempt 액션을 넣는다.
-    auto retry = std::make_unique<bt::Retry>(3);
-    retry->setChild(std::make_unique<bt::Action>("InsertAttempt", [&]{
-        ++attempt;
-        // 시도가 거듭될수록 정렬이 좋아져 force_xy 가 줄어든다고 가정
-        force_xy = 8.4 / static_cast<double>(attempt) - 0.4 * (attempt - 1);
-        std::cout << "[InsertAttempt #" << attempt << "] Fxy = " << force_xy;
-        if (force_xy > align_thresh) {
+    // 5. insert attempt (Retry 3times)
+    auto insertAttempt = std::make_unique<bt::Action>("InsertAttempt", [&]{
+        ++attempt_cnt;
+        
+        force_xy = 10 - 4*(attempt_cnt - 1);
+        std::cout << ">> [InsertAttempt #" << attempt_cnt << "] Fxy = " << force_xy;
+        if (force_xy > align_force_thresh) {
             std::cout << "  -> too high, FAIL\n";
             return bt::Status::Failure;
         }
         std::cout << "  -> inserted\n";
         return bt::Status::Success;
-    }));
+    });
+
+    // 6. verify depth
+    auto verifyDepth = std::make_unique<bt::Action>("VerifyDepth", []{
+        std::cout << ">> insertion depth ok\n";
+        return bt::Status::Success;
+    });
+
+    // 7. disable force mode
+    auto disableForceMode = std::make_unique<bt::Action>("DisableForceMode", []{
+        std::cout << ">> force control off!\n";
+        return bt::Status::Success;
+    });
+
+
+
+    /* * * * add children to sequence * * * */
+    root.addChild(checkContact(is_contact));
+
+    root.addChild(std::move(enableForceMode));
+
+    // for inverter test
+    is_contact = true;
+    auto inverter = std::make_unique<bt::Inverter>();
+    inverter->setChild(checkContact(is_contact));
+    root.addChild(std::move(inverter));
+
+    root.addChild(std::move(approachHole));
+
+    // for retry test
+    auto retry = std::make_unique<bt::Retry>(max_attempt_cnt);
+    retry->setChild(std::move(insertAttempt));
     root.addChild(std::move(retry));
 
-    root.addChild(std::make_unique<bt::Action>("VerifyDepth", []{
-        std::cout << "[VerifyDepth] depth ok\n";
-        return bt::Status::Success;
-    }));
+    root.addChild(std::move(verifyDepth));
+    root.addChild(std::move(disableForceMode));
 
-    root.addChild(std::make_unique<bt::Action>("DisableForceMode", []{
-        std::cout << "[DisableForceMode] off\n";
-        return bt::Status::Success;
-    }));
 
-    auto status = root.tick();
+
+    /* * * * run scenario * * * */
+    bt::Status status;
+    do {
+        status = root.tick();
+    } while (status == bt::Status::Running);
+
     std::cout << "result = " << toStr(status) << "\n";
     return 0;
 }
