@@ -27,15 +27,81 @@ int main() {
 
     bt::Sequence root;
 
-    // TODO: 다음 액션들을 root 에 추가한다. 람다에서 bb 를 캡처해 사용.
-    //
-    //   1) EnableForceMode
-    //   2) MeasureFz          : 임의의 시뮬레이션 값(예: 7.2)을 bb->set("force_z", v) 로 저장
-    //   3) DecideAdjustment   : 목표 5.0 N 과의 오차로 bb->set("dz_correction", -err * gain)
-    //   4) ApplyAdjustment    : bb->get("dz_correction") 만큼 z 를 줄였다고 출력
-    //   5) DisableForceMode
+    const double fz = 7.2;
+    const double target_fz = 5.0;
+    double pose_z = 0.0;
+    const double gain = 0.005;
 
-    auto status = root.tick();
+
+    /* * * * add actions for sequence * * * */
+
+    // 1) enable force mode
+    auto enableForceMode = std::make_unique<bt::Action>("EnableForceMode", []{
+        std::cout << ">> force control on!\n";
+        return bt::Status::Success;
+    });
+
+    // 2) measure Fz
+    auto measureFz = std::make_unique<bt::Action>("MeasureFz",[bb, fz] {
+            const double value_fz = fz;
+            bb->set("fts_fz", value_fz);
+
+            return bt::Status::Success;
+    });
+
+    // 3) update Pose correction
+    auto updatePoseCorrection = std::make_unique<bt::Action>("UpdatePoseCorrection",[bb, target_fz, gain] {
+            if (!bb->has("fts_fz")) {
+                std::cout << "[Blackboard Error] value is missing\n";
+                return bt::Status::Failure;
+            }
+
+            const double fz = bb->get("fts_fz");
+            const double err = fz - target_fz;
+            const double value_dz_correction = -err * gain;
+
+            bb->set("dz_correction", value_dz_correction);
+
+            return bt::Status::Success;
+    });
+
+    // 4) apply position
+    auto applyPosition = std::make_unique<bt::Action>("ApplyPosition", [bb, &pose_z] {
+            if (!bb->has("dz_correction")) {
+                std::cout << "[Blackboard Error] value is missing\n";
+                return bt::Status::Failure;
+            }
+
+            const double dz = bb->get("dz_correction");
+            pose_z += dz;
+
+            return bt::Status::Success;
+        }
+    );
+
+    // 5) disable force mode
+    auto disableForceMode = std::make_unique<bt::Action>("DisableForceMode", []{
+        std::cout << ">> force control off!\n";
+        return bt::Status::Success;
+    });
+
+
+
+    /* * * * add children to sequence * * * */
+    root.addChild(std::move(enableForceMode));
+    root.addChild(std::move(measureFz));
+    root.addChild(std::move(updatePoseCorrection));
+    root.addChild(std::move(applyPosition));
+    root.addChild(std::move(disableForceMode));
+
+
+
+    /* * * * run scenario * * * */
+    bt::Status status;
+    do {
+        status = root.tick();
+    } while (status == bt::Status::Running);
+
     std::cout << "result = " << toStr(status) << "\n";
     return 0;
 }
