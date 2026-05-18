@@ -13,6 +13,7 @@ public:
 
 protected:
     std::vector<std::unique_ptr<Node>> children_;
+    size_t child_idx_= 0;
 };
 
 } // namespace bt

@@ -34,6 +34,17 @@ std::unique_ptr<bt::Action> fail(const char* tag) {
     });
 }
 
+std::unique_ptr<bt::Action> running(const char* tag) {
+    return std::make_unique<bt::Action>(tag, [tag] {
+        static int cnt = 0;
+        cnt ++;
+        std::cout << "[" << tag << "] RUNNING\n";
+        if (cnt >= 2){
+            return bt::Status::Success;
+        }
+        return bt::Status::Running;
+    });
+}
 } // namespace
 
 int main() {
@@ -74,6 +85,22 @@ int main() {
     sel2.addChild(fail("X"));
     bt::Status result4 = sel2.tick();
     std::cout << "result = " << toStr(result4) << "\n\n";
+
+
+
+    std::cout << "== test 5 : selector running ==\n";
+    bt::Selector sel3;
+    bt::Status result5;
+    
+    sel3.addChild(fail("X"));
+    sel3.addChild(running("X"));
+    sel3.addChild(fail("X"));
+        
+    for (int i = 0; i < 2; ++i) {
+        result5 = sel3.tick();
+
+        std::cout << "result = " << toStr(result5) << "\n\n";    
+    }
     
     return 0;
 }

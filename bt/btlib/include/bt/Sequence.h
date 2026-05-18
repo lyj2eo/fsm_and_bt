@@ -16,7 +16,6 @@ public:
 
 private:
     SequenceType st_;
-    size_t current_child_idx_ = 0;
 };
 
 } // namespace bt
