@@ -6,8 +6,15 @@ namespace bt {
 
 class Selector : public Composite {
 public:
+
+    Selector(const std::string& name) 
+    {
+        name_ = name;
+    }
+    
+    Selector() : Selector("Selector") {}
+
     Status tick() override;
-    std::string name() const override { return "Selector"; }
 };
 
 } // namespace bt

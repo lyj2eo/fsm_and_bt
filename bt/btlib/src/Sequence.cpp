@@ -11,19 +11,19 @@ Status Sequence::tick() {
 
         if (status == Status::Running) {
             child_idx_ = i;
-            std::cout<<"[Sequence] . . . Running . . ."<<std::endl;
+            std::cout<<"[Sequence : "<< name_ << "] . . . Running . . ."<<std::endl;
             return Status::Running;
         }
         
         if (status == Status::Failure) {
             child_idx_ = 0;
-            std::cout<<"[Sequence] ==== Failure ===="<<std::endl;
+            std::cout<<"[Sequence : "<< name_ << "] ==== Failure ===="<<std::endl;
             return Status::Failure;
         }
     }
     
     child_idx_ = 0;
-    std::cout<<"[Sequence] ==== Success ===="<<std::endl;
+    std::cout<<"[Sequence : "<< name_ << "] ==== Success ===="<<std::endl;
     return Status::Success;
 }
 

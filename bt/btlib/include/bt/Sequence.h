@@ -8,11 +8,14 @@ class Sequence : public Composite {
 public:
     enum class SequenceType{ Restart, Resume };
 
-    Sequence(SequenceType st = SequenceType::Restart)
-        : st_(st){}
+    Sequence(const std::string& name, SequenceType st = SequenceType::Restart): st_(st)
+    {
+        name_ = name;
+    }
+    
+    Sequence() : Sequence("Sequence") {}
 
     Status tick() override;
-    std::string name() const override { return "Sequence"; }
 
 private:
     SequenceType st_;
