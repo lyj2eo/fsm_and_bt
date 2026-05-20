@@ -3,23 +3,62 @@
 #include <variant>
 #include <vector>
 #include <unordered_map>
+#include <iostream>
 
 namespace bt {
 
 class Blackboard {
 public:
-    using Value = std::variant<int, double, std::vector<double>>;
+    using Value = std::variant<int, double, std::vector<double>, bool>;
 
-    // void set(const std::string& key, int value);
-    void set(const std::string& key, double value);
-    // void set(const std::string& key, std::vector<double> value);
+    template <typename T>
+    void set(const std::string& key, T value)
+    {
+        if (!this) {
+            std::cout << ">> blackboard is null\n";
+        }
 
-    // int get(const std::string& key, int default_value = 0) const;
-    double get(const std::string& key, double default_value = 0.0) const;
-    // std::vector<double> get(const std::string& key, const std::vector<double>& default_value = {}) const;
-    // TODO Template
+        std::cout << "[Blackboard] set " << key << " = " << value << std::endl;
+        values_.insert({key, value});
+    }
 
-    bool has(const std::string& key) const;
+    template <typename T>
+    void update(const std::string& key, T value)
+    {
+        if (!this) {
+            std::cout << ">> blackboard is null\n";
+        }
+
+        std::cout << "[Blackboard] update " << key << " = " << value << std::endl;
+        values_.at(key) = value;
+    }
+
+    template <typename T>
+    T get(const std::string& key) const
+    {
+        try {
+            const auto& value = values_.at(key);
+            const T result = std::get<T>(value);
+
+            std::cout << "[Blackboard] get " << key << "\n";
+
+            return result;
+
+        } catch (const std::out_of_range&) {
+            std::cout << "[Blackboard] get failed: key '" << key << "' not found\n";
+            return T{};
+
+        } catch (const std::bad_variant_access&) {
+            std::cout << "[Blackboard] get failed: key '" << key << "' type mismatch\n";
+            return T{};
+        }
+    }
+
+    bool has(const std::string& key) const
+    {
+        // std::cout << "[Blackboard] has " << key << " = " << (values_.find(key) != values_.end()) << std::endl;
+        return values_.find(key) != values_.end();
+    }
 
 private:
     std::unordered_map<std::string, Value> values_;
