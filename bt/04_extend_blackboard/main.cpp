@@ -25,7 +25,7 @@ const char* toStr(bt::Status s) {
 int main() {
     auto bb = std::make_shared<bt::Blackboard>();
 
-    bt::Sequence root;
+    bt::Sequence root("root", bt::Sequence::SequenceType::Resume);
 
     const double fz = 7.2;
     const double target_fz = 5.0;
@@ -56,7 +56,7 @@ int main() {
                 return bt::Status::Failure;
             }
 
-            const double fz = bb->get("fts_fz");
+            const double fz = bb->get<double>("fts_fz");
             const double err = fz - target_fz;
             const double value_dz_correction = -err * gain;
 
@@ -72,7 +72,7 @@ int main() {
                 return bt::Status::Failure;
             }
 
-            const double dz = bb->get("dz_correction");
+            const double dz = bb->get<double>("dz_correction");
             pose_z += dz;
 
             return bt::Status::Success;

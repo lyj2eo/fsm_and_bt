@@ -22,7 +22,8 @@ const char* toStr(bt::Status s) {
 
 std::unique_ptr<bt::Action> moveTo(const std::string& name,
                                     double& pose_z,
-                                    double target_z){
+                                    double target_z)
+{
     return std::make_unique<bt::Action>( name, [&pose_z, target_z]() {
         std::cout << ">> move to pose : " << pose_z << " -> " << target_z << std::endl;
         pose_z = target_z;
@@ -39,10 +40,9 @@ int main() {
     double safety_height = 0.10;
 
     bool is_contact = false;
-    bool gripper_closed = false;
     const double contact_threshold = 5.0;
 
-    bt::Sequence root(bt::Sequence::SequenceType::Resume);
+    bt::Sequence root("root",bt::Sequence::SequenceType::Resume);
 
     /* * * * add actions for sequence * * * */
     //   1) EnableForceMode

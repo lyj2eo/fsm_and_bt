@@ -38,7 +38,7 @@ int main() {
     double force_xy = 0.0;
     const double align_force_thresh = 2.0;
 
-    bt::Sequence root(bt::Sequence::SequenceType::Resume);
+    bt::Sequence root("root", bt::Sequence::SequenceType::Resume);
 
     /* * * * add actions for sequence * * * */
     // 1. 접촉 확인 (접촉이 있을시 실패)
@@ -92,15 +92,15 @@ int main() {
 
     // for inverter test
     is_contact = true;
-    auto inverter = std::make_unique<bt::Inverter>();
-    inverter->setChild(checkContact(is_contact));
+    auto inverter = std::make_unique<bt::Inverter>("Inverter");
+    inverter->addChild(checkContact(is_contact));
     root.addChild(std::move(inverter));
 
     root.addChild(std::move(approachHole));
 
     // for retry test
-    auto retry = std::make_unique<bt::Retry>(max_attempt_cnt);
-    retry->setChild(std::move(insertAttempt));
+    auto retry = std::make_unique<bt::Retry>("Retry", max_attempt_cnt);
+    retry->addChild(std::move(insertAttempt));
     root.addChild(std::move(retry));
 
     root.addChild(std::move(verifyDepth));

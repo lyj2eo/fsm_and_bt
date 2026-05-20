@@ -48,19 +48,20 @@ std::unique_ptr<bt::Action> running(const char* tag) {
 } // namespace
 
 int main() {
-    
+    bt::Blackboard bb;
+
     std::cout << "== test 1 : sequence all-success ==\n";
-    bt::Sequence seq1;
+    bt::Sequence seq1("seq1");
+
+    seq1.setBlackboard(bb);
     seq1.addChild(ok("A"));
     seq1.addChild(ok("B"));
     seq1.addChild(ok("C"));
     bt::Status result = seq1.tick();
     std::cout << "result = " << toStr(result) << "\n\n";
 
-
-
     std::cout << "== test 2 : sequence with failure ==\n";
-    bt::Sequence seq2;
+    bt::Sequence seq2("seq2");
     seq2.addChild(ok("A"));
     seq2.addChild(fail("X"));
     seq2.addChild(ok("C"));
@@ -70,7 +71,7 @@ int main() {
 
 
     std::cout << "== test 3 : selector finds first success ==\n";
-    bt::Selector sel1;
+    bt::Selector sel1("sel1");
     sel1.addChild(fail("X"));
     sel1.addChild(ok("B"));
     sel1.addChild(ok("C"));
@@ -80,7 +81,7 @@ int main() {
 
 
     std::cout << "== test 4 : selector all fail ==\n";
-    bt::Selector sel2;
+    bt::Selector sel2("sel2");
     sel2.addChild(fail("X"));
     sel2.addChild(fail("X"));
     bt::Status result4 = sel2.tick();
@@ -89,7 +90,7 @@ int main() {
 
 
     std::cout << "== test 5 : selector running ==\n";
-    bt::Selector sel3;
+    bt::Selector sel3("sel3");
     bt::Status result5;
     
     sel3.addChild(fail("X"));
