@@ -9,11 +9,13 @@ Status Inverter::tick()
     }
 
     auto status = child_->tick();
-    if(status == Status::Success)
+    if(status == Status::Success){
         return Status::Failure;
+    }
 
-    if(status == Status::Failure)
+    if(status == Status::Failure){
         return Status::Success;
+    }    
 
     return Status::Running;
 }
