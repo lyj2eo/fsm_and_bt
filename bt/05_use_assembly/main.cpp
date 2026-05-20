@@ -1,12 +1,8 @@
-// 05_use_assembly - 힘제어 기반 peg-in-hole 조립 통합 시나리오.
-//
-// btlib 에는 손대지 않는다. 트리 구성과 액션 본체는 모두 학습자가 작성한다.
-// 자세한 트리 구조와 동작은 README.md 참고.
-
 #include "bt/Sequence.h"
 #include "bt/Action.h"
 #include "bt/Retry.h"
 #include "bt/Blackboard.h"
+#include "actions/assembly_actions.h"
 
 #include <iostream>
 #include <memory>
@@ -25,28 +21,76 @@ const char* toStr(bt::Status s) {
 } // namespace
 
 int main() {
-    auto bb = std::make_shared<bt::Blackboard>();
+    bt::Blackboard bb;
 
-    // 시뮬레이션 상태 — 람다에서 캡처해 사용
-    double pose_z          = 0.10;
-    double force_z         = 0.0;
-    double force_xy        = 0.0;
-    int    insert_attempt  = 0;
-    bool   gripper_closed  = false;
+    double pose_z          = 0.0;               //bb - state
+    double force_z         = 0.0;               //bb - sensor
+    double force_xy        = 0.0;               //bb - sensor
+    double current_depth   = 0.03;              //bb - state
+    bool   gripper_closed  = false;             //bb - task.gripper
+    
+    int max_attempt_cnt = 5;                    //bb - parameter
 
-    (void)pose_z; (void)force_z; (void)force_xy;
-    (void)insert_attempt; (void)gripper_closed;
+    const double waypoint_part_z = 0.10;        //api
+    const double waypoint_lift_z = 0.12;        //api
+    const double waypoint_hole_z = 0.10;        //api
 
-    bt::Sequence root;
+    const double contact_force_threshold = 5.0; //bb - parameter
+    const double align_force_threshold = 2.0;   //bb - parameter
 
-    // TODO: README 의 트리 구조에 맞춰 액션들을 root 에 추가한다.
-    //
-    //   - Pick 단계는 또 하나의 Sequence 로 묶어 root 의 자식으로 넣는다.
-    //   - InsertAttempt 는 Retry(3) 로 감싼다.
-    //   - DescendUntilContact 가 끝나면 bb->set("surface_z", pose_z) 처럼
-    //     Blackboard 에 값을 저장한다. VerifyDepth 에서 그 값을 다시 읽어 비교한다.
+    const double target_depth = 0.03;           //bb - target
+    const double depth_tolerance = 0.005;       //bb - parameter
 
-    auto status = root.tick();
+    bb.set("pose_z", pose_z);
+    bb.set("surface_z", pose_z);
+    bb.set("force_z", force_z);
+    bb.set("force_xy", force_xy);
+    bb.set("current_depth", current_depth);
+    bb.set("gripper_closed", gripper_closed);
+    bb.set("max_attempt_cnt", max_attempt_cnt);
+    bb.set("waypoint_part_z", waypoint_part_z);
+    bb.set("waypoint_lift_z", waypoint_lift_z);
+    bb.set("waypoint_hole_z", waypoint_hole_z);
+    bb.set("contact_force_threshold", contact_force_threshold);
+    bb.set("align_force_threshold", align_force_threshold);
+    bb.set("target_depth", target_depth);
+    bb.set("depth_tolerance", depth_tolerance);
+
+
+    bt::Sequence root("root", bt::Sequence::SequenceType::Resume);
+
+    root.setBlackboard(bb);
+
+
+    /* * * * create "pick sequence" actions * * * */
+    auto pick = std::make_unique<bt::Sequence>("pick", bt::Sequence::SequenceType::Resume);
+    pick->addChild(std::make_unique<assembly::MoveAbovePart>(pose_z, waypoint_part_z));
+    pick->addChild(std::make_unique<assembly::DescendUntilContact>(pose_z, force_z, contact_force_threshold));
+    pick->addChild(std::make_unique<assembly::CloseGripper>(gripper_closed));
+    pick->addChild(std::make_unique<assembly::Lift>(pose_z, waypoint_lift_z));
+
+
+    /* * * * create "retry decorator" actions * * * */
+    auto retry = std::make_unique<bt::Retry>("insert retry",max_attempt_cnt);
+    retry->addChild(std::make_unique<assembly::InsertAttempt>(force_xy, align_force_threshold));
+    
+
+    /* * * * create "root sequence" actions * * * */
+    root.addChild(std::make_unique<assembly::EnableForceMode>());
+    root.addChild(std::move(pick));
+    root.addChild(std::make_unique<assembly::MoveAboveHole>(pose_z, waypoint_hole_z));
+    root.addChild(std::move(retry));
+    root.addChild(std::make_unique<assembly::VerifyDepth>(current_depth, target_depth, depth_tolerance));
+    root.addChild(std::make_unique<assembly::ReleaseGripper>(gripper_closed));
+    root.addChild(std::make_unique<assembly::DisableForceMode>());
+
+
+    /* run */
+    bt::Status status;
+    do {
+        status = root.tick();
+    } while (status == bt::Status::Running);
+
     std::cout << "result = " << toStr(status) << "\n";
     return 0;
 }
