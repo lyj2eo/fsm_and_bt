@@ -4,12 +4,26 @@
 #include <vector>
 #include <unordered_map>
 #include <iostream>
+#include <cstddef>
 
 namespace bt {
 
+inline std::ostream& operator<<(std::ostream& os, const std::vector<double>& values)
+{
+    os << "[";
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        if (i > 0) {
+            os << ", ";
+        }
+        os << values[i];
+    }
+    os << "]";
+    return os;
+}
+
 class Blackboard {
 public:
-    using Value = std::variant<int, double, std::vector<double>, bool>;
+    using Value = std::variant<int, double, bool, std::string, std::vector<double>>;
 
     template <typename T>
     void set(const std::string& key, T value)
