@@ -20,6 +20,9 @@ public:
 
 private:
     bt::Blackboard& bb_;
+    ContactEvent contact_event_;
+    ContactMode contact_mode_;
+    std::string cur_event_, cur_mode_, prev_event_, prev_mode_;
 };
 
 } // namespace ca

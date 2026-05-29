@@ -4,5 +4,6 @@ add_executable(bt_06_hcr_contact_autonomy
     observer/observer.cpp
     identifier/contact_identifier.cpp
     supervisor/contact_supervisor.cpp
+    virtual_environment.cpp
 )
 target_link_libraries(bt_06_hcr_contact_autonomy PRIVATE btlib)

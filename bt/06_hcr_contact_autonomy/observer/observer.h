@@ -20,8 +20,8 @@ public:
 
     struct ForceTorqueSensor
     {
-        std::vector<double> force = std::vector<double>(6, 0.0);
-        std::vector<double> torque = std::vector<double>(6, 0.0);
+        std::vector<double> force = std::vector<double>(3, 0.0);
+        std::vector<double> torque = std::vector<double>(3, 0.0);
     };
     
     struct RobotState
@@ -31,6 +31,24 @@ public:
         std::vector<double> tcp_position = std::vector<double>(3, 0.0);
         std::vector<double> tcp_orientation = std::vector<double>(3, 0.0);
     };
+
+
+    /*setter*/
+    void setForceValue(const std::vector<double>& force)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            fts_.force[i] = force[i];
+        }
+    }
+
+    void setTcpPosition(const std::vector<double>& tcp_position)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            rs_.tcp_position[i] = tcp_position[i];
+        }
+    }
 
 private:
     RobotContext& ctx_;
