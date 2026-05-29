@@ -11,7 +11,7 @@ Status Selector::tick() {
 
         if (status == Status::Success) {
             child_idx_ = 0;
-            std::cout<<"[Selector : "<< name_ << "] ==== Success ===="<<std::endl;
+            // std::cout<<"[Selector : "<< name_ << "] ==== Success ===="<<std::endl;
             return Status::Success;
         }
 

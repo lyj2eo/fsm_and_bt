@@ -43,7 +43,7 @@ public:
             std::cout << ">> blackboard is null\n";
         }
 
-        std::cout << "[Blackboard] update " << key << " = " << value << std::endl;
+        // std::cout << "[Blackboard] update " << key << " = " << value << std::endl;
         values_.at(key) = value;
     }
 
@@ -54,7 +54,7 @@ public:
             const auto& value = values_.at(key);
             const T result = std::get<T>(value);
 
-            std::cout << "[Blackboard] get " << key << "\n";
+            // std::cout << "[Blackboard] get " << key << "\n";
 
             return result;
 

@@ -23,7 +23,7 @@ Status Sequence::tick() {
     }
     
     child_idx_ = 0;
-    std::cout<<"[Sequence : "<< name_ << "] ==== Success ===="<<std::endl;
+    // std::cout<<"[Sequence : "<< name_ << "] ==== Success ===="<<std::endl;
     return Status::Success;
 }
 
